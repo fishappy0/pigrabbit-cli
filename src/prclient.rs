@@ -4,7 +4,7 @@ use crate::types::*;
 const API_URL: &str = "https://porkbun.com/api/json/v3/";
 pub struct PRClient {
     pub key: Keys,
-    pub client: reqwest::Client,
+    client: reqwest::Client,
 }
 
 /// **The domain_name argument for each function is the one that you own on PorkBun.com**
