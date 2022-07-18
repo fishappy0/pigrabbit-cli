@@ -6,12 +6,15 @@ pub struct PRClient {
     pub key: Keys,
     pub client: reqwest::Client,
 }
+
+/// **The domain_name argument for each function is the one that you own on PorkBun.com**
 impl PRClient {
     pub fn new(keys: Keys) -> Self {
         let client = reqwest::Client::new();
         Self { key: keys, client }
     }
 
+    /// The `send_request` function that execute the post request with the given body.
     async fn send_request<T: Serialize>(
         client: &mut reqwest::Client,
         url: &str,
@@ -29,8 +32,9 @@ impl PRClient {
         res.to_owned()
     }
 
-    pub async fn add_record(&mut self, domain_name: &str, record_struct: &Record) -> Option<()> {
-        let url = format!("{API_URL}dns/create/{domain_name}");
+    /// The add_record function adds a DNS Record
+    pub async fn add_record(&mut self, domain: &str, record_struct: &Record) -> Option<()> {
+        let url = format!("{API_URL}dns/create/{domain}");
         let body = ComplicatedBody {
             secretapikey: &self.key.secretapikey,
             apikey: &self.key.apikey,
@@ -46,6 +50,11 @@ impl PRClient {
         }
     }
 
+    /// This function edits the record based on the domain.
+    /// While the id requires you to get the id from the api
+    ///
+    /// You can use the `retrieve_by_domain_with_id` function with an  empty id
+    /// to list all of your records
     pub async fn edit_by_domain_and_id(
         &mut self,
         domain: &str,
@@ -68,6 +77,7 @@ impl PRClient {
         }
     }
 
+    /// This function edits the record based on the domain, type and(or) subdomain
     pub async fn edit_by_domain_subdomain_and_type(
         &mut self,
         domain: &str,
@@ -89,6 +99,7 @@ impl PRClient {
         }
     }
 
+    /// This function deletes the record with the domain name, type and subdomain specified
     pub async fn del_by_type_with_subdomain(
         &mut self,
         dtype: &str,
@@ -103,6 +114,7 @@ impl PRClient {
         }
     }
 
+    /// This function deletes the record with the domain name and id specified
     pub async fn del_by_id(&mut self, domain: &str, id: &str) -> Option<()> {
         let url = format!("{API_URL}dns/delete/{domain}/{id}");
         let res = Self::send_request(&mut self.client, &url, &self.key).await;
@@ -112,6 +124,8 @@ impl PRClient {
         }
     }
 
+    /// This function retrieve the record information
+    /// with the domain name, type and subdomain specified
     pub async fn retreive_by_type_with_subdomain(
         &mut self,
         dtype: &str,
@@ -131,6 +145,12 @@ impl PRClient {
         }
     }
 
+    /// This function,
+    ///
+    /// *with a specified id*: retrieves the information on the specific record that
+    /// you wanted to view
+    ///
+    /// *without a specified id*: lists all the records under that domain name
     pub async fn retreive_by_domain_with_id(
         &mut self,
         domain: &str,
@@ -149,6 +169,7 @@ impl PRClient {
         }
     }
 
+    /// This function retrieves all the ssl certificates attatched to the domain specified
     pub async fn retreive_ssl_by_domain(&mut self, domain: &str) -> Option<Certificate> {
         let url = format!("{API_URL}ssl/retrieve/{domain}");
         let body = serde_json::to_string(&self.key).unwrap();

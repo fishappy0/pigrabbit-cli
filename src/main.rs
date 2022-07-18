@@ -1,3 +1,18 @@
+/// A PRClient stands for PigRabbitClient is technically
+/// a reqwest client with authentication keys that was required by PorkBun API
+///
+/// Therefore, to construct the client, the apikey and secretapikey should be provided
+/// to the PRClient in the Keys struct format before performing any interaction to the API.
+///
+/// An usage example of the PRClient:
+/// ```
+/// let keys_file: String = fs::read_to_string("keys.json").expect("File not found!");
+/// let keys: Keys = serde_json::from_str(&);
+/// let mut client = PRClient::new(keys);
+///
+/// client.retrieve_by_domain_with_id("example.com", "1234567").await;
+/// client.del_by_id("example.com","1234567").await;
+/// ```
 mod prclient;
 mod types;
 
