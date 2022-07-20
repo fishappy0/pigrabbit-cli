@@ -29,6 +29,16 @@ fn create_config_file(json_config_dir: &Path) -> pigrabbit::types::Keys {
     serde_json::to_writer(File::create(&json_config_dir).unwrap(), &key_struct).unwrap();
     key_struct
 }
+// cre
+fn read_existing_dir_or_create(config_dir: &Path) {
+    std::fs::read_dir(config_dir)
+        .map_err(|e| match e {
+            e if e.kind() == std::io::ErrorKind::NotFound => create_config_folder(config_dir),
+            e => println!("Error: {}", e),
+        })
+        .unwrap();
+}
+
 // Grab the keypair from the config file or generate a new one if it doesn't exist.
 fn get_keys(config_dir: &Path, config_file: &Path) -> pigrabbit::types::Keys {
     read_existing_dir_or_create(&config_dir);
@@ -38,15 +48,6 @@ fn get_keys(config_dir: &Path, config_file: &Path) -> pigrabbit::types::Keys {
         // Panic if there is an error other than file not found.
         Err(e) => panic!("{}", e),
     }
-}
-
-fn read_existing_dir_or_create(config_dir: &Path) {
-    std::fs::read_dir(config_dir)
-        .map_err(|e| match e {
-            e if e.kind() == std::io::ErrorKind::NotFound => create_config_folder(config_dir),
-            e => println!("Error: {}", e),
-        })
-        .unwrap();
 }
 
 #[tokio::main]
