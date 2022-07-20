@@ -1,17 +1,8 @@
 use directories::BaseDirs;
 use std::fs::File;
-use std::fs::OpenOptions;
 use std::path::Path;
 use tokio;
 
-// create a new folder in the config directory
-fn create_config_folder(config_dir: &Path) {
-    OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&config_dir)
-        .unwrap();
-}
 // Generate a keypair and save it to the config folder.
 fn create_config_file(json_config_dir: &Path) -> pigrabbit::types::Keys {
     let mut apikey = "".to_owned();
@@ -29,14 +20,16 @@ fn create_config_file(json_config_dir: &Path) -> pigrabbit::types::Keys {
     serde_json::to_writer(File::create(&json_config_dir).unwrap(), &key_struct).unwrap();
     key_struct
 }
-// cre
+
+// Checks if the config folder exists. If not, it creates it.
 fn read_existing_dir_or_create(config_dir: &Path) {
-    std::fs::read_dir(config_dir)
-        .map_err(|e| match e {
-            e if e.kind() == std::io::ErrorKind::NotFound => create_config_folder(config_dir),
-            e => println!("Error: {}", e),
-        })
-        .unwrap();
+    match std::fs::read_dir(config_dir) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            std::fs::create_dir(config_dir).unwrap()
+        }
+        Err(e) => panic!("Error: {}", e),
+        _ => (),
+    }
 }
 
 // Grab the keypair from the config file or generate a new one if it doesn't exist.
