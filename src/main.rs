@@ -30,7 +30,8 @@ fn create_config_file(json_config_dir: &Path) -> pigrabbit::types::Keys {
     key_struct
 }
 // Grab the keypair from the config file or generate a new one if it doesn't exist.
-fn get_keys(config_file: &Path) -> pigrabbit::types::Keys {
+fn get_keys(config_dir: &Path, config_file: &Path) -> pigrabbit::types::Keys {
+    read_existing_dir_or_create(&config_dir);
     match std::fs::read_to_string(config_file) {
         Ok(v) => serde_json::from_str(&v).expect("Failed to parse config file"),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => create_config_file(config_file),
@@ -39,7 +40,7 @@ fn get_keys(config_file: &Path) -> pigrabbit::types::Keys {
     }
 }
 
-fn check_and_create_dir(config_dir: &Path) {
+fn read_existing_dir_or_create(config_dir: &Path) {
     std::fs::read_dir(config_dir)
         .map_err(|e| match e {
             e if e.kind() == std::io::ErrorKind::NotFound => create_config_folder(config_dir),
@@ -54,10 +55,9 @@ async fn main() {
     let config_dir = base_dirs.config_dir().join("pigrabbit-cli");
     let json_config_dir = config_dir.join("config.json");
 
-    check_and_create_dir(&config_dir);
-    let key_struct = get_keys(&json_config_dir);
-
+    let key_struct = get_keys(&config_dir, &json_config_dir);
     let mut prclient = pigrabbit::PRClient::new(key_struct);
+
     let result = prclient
         .retreive_ssl_by_domain(
             "arvinderd.com",
