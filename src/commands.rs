@@ -1,6 +1,5 @@
-use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
+use std::path::Path;
 
 #[derive(Parser)]
 #[clap(
@@ -10,7 +9,7 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     // Set the configuration file to use.
     #[clap(short, long)]
-    pub config: PathBuf,
+    pub config: Option<std::path::PathBuf>,
 
     #[clap(subcommand)]
     pub command: Commands,

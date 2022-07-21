@@ -1,4 +1,5 @@
 use clap::Parser;
+use commands::Cli;
 use directories::BaseDirs;
 use std::fs::File;
 use std::path::Path;
@@ -45,17 +46,22 @@ fn get_keys(config_dir: &Path, config_file: &Path) -> pigrabbit::types::Keys {
     }
 }
 
-#[tokio::main]
-async fn main() {
-    let base_dirs = BaseDirs::new().unwrap();
-    let config_dir = base_dirs.config_dir().join("pigrabbit-cli");
-    let json_config_dir = config_dir.join("config.json");
+async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::PathBuf>) {
+    let key_struct;
+    match config_file {
+        Some(v) => {
+            key_struct = get_keys(v.parent().unwrap(), v);
+        }
+        None => {
+            let base_dirs = BaseDirs::new().unwrap();
+            let config_dir = base_dirs.config_dir().join("pigrabbit-cli");
+            let json_config_dir = config_dir.join("config.json");
+            key_struct = get_keys(&config_dir, &json_config_dir);
+        }
+    }
 
-    let key_struct = get_keys(&config_dir, &json_config_dir);
     let mut prclient = pigrabbit::PRClient::new(key_struct);
-
-    let cli = commands::Cli::parse();
-    match cli.command {
+    match &cli_instance.command {
         // Retreiving record by providing either id or subdomain and rtype.
         commands::Commands::RetreiveRecord {
             domain,
@@ -67,7 +73,7 @@ async fn main() {
                 "id: {:?}, subdomain: {:?}, rtype: {:?}",
                 id, subdomain, rtype
             );
-            if id != None && rtype != None {
+            if id.to_owned() != None && rtype.to_owned() != None {
                 panic!("[PigRabbit] You can only either retreive a record by id or by subdomain and record type");
             }
 
@@ -75,7 +81,7 @@ async fn main() {
                 Some(record_type) => {
                     let subdomain_name = match subdomain {
                         Some(subdomain) => subdomain,
-                        None => "".to_owned(),
+                        None => "",
                     };
 
                     let res = prclient
@@ -106,7 +112,7 @@ async fn main() {
             println!("{:#?}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Deletes a record by each options.
-        commands::Commands::DeleteRecord(delete_by) => match delete_by.command {
+        commands::Commands::DeleteRecord(delete_by) => match &delete_by.command {
             // Delete a record by id.
             commands::DeleteOptions::ById { domain, id } => {
                 prclient.del_by_id(&domain, &id).await.unwrap();
@@ -134,16 +140,16 @@ async fn main() {
             ttl,
         } => {
             let record = pigrabbit::types::Record {
-                name: name,
-                dtype: rtype,
-                content: content,
-                ttl: ttl,
+                name: name.to_owned(),
+                dtype: rtype.to_owned(),
+                content: content.to_owned(),
+                ttl: ttl.to_owned(),
             };
             let res = prclient.add_record(&domain, &record).await;
             println!("{:#?}", res);
         }
         // Updates a record by each options.
-        commands::Commands::EditRecord(edit_by) => match edit_by.command {
+        commands::Commands::EditRecord(edit_by) => match &edit_by.command {
             // Update a record by id.
             commands::EditOptions::ById {
                 domain,
@@ -154,10 +160,10 @@ async fn main() {
                 ttl,
             } => {
                 let record = pigrabbit::types::Record {
-                    name: name,
-                    dtype: rtype,
-                    content: content,
-                    ttl: ttl.unwrap_or("".to_owned()),
+                    name: name.to_owned(),
+                    dtype: rtype.to_owned(),
+                    content: content.to_owned(),
+                    ttl: ttl.to_owned().unwrap_or("".to_owned()),
                 };
                 let res = prclient.edit_by_domain_and_id(&domain, &id, &record).await;
                 println!("{:#?}", res);
@@ -174,8 +180,8 @@ async fn main() {
                 let record = pigrabbit::types::Record {
                     name: "".to_owned(),
                     dtype: rtype.to_owned(),
-                    content: content,
-                    ttl: ttl,
+                    content: content.to_owned(),
+                    ttl: ttl.to_owned(),
                 };
                 let res = prclient
                     .edit_by_domain_subdomain_and_type(&domain, &subdomain, record_type, &record)
@@ -184,4 +190,10 @@ async fn main() {
             }
         },
     }
+}
+#[tokio::main]
+async fn main() {
+    let cli = commands::Cli::parse();
+
+    execute_command(&cli, cli.config.as_ref()).await;
 }
