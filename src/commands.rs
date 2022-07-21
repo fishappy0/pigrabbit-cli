@@ -8,17 +8,11 @@ use clap::{Parser, Subcommand};
     about = "A command line interface using PigRabbit API"
 )]
 pub struct Cli {
-    /// Optional name to operate on
-    #[clap(value_parser)]
     pub name: Option<String>,
 
     /// Sets a custom config file
     #[clap(short, long, value_parser, value_name = "FILE")]
     pub config: Option<PathBuf>,
-
-    /// Turn debugging information on
-    #[clap(short, long, action = clap::ArgAction::Count)]
-    pub(crate) debug: u8,
 
     #[clap(subcommand)]
     pub command: Option<Commands>,
@@ -31,13 +25,13 @@ pub enum Commands {
         about = "Retreiving record(s) information from PorkBun, with the given id or the subdomain and rtype"
     )]
     RetreiveRecord {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         id: Option<String>,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         subdomain: Option<String>,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         rtype: Option<String>,
     },
     #[clap(
@@ -45,28 +39,28 @@ pub enum Commands {
         about = "Retreiving SSL information from PorkBun, with the given domain"
     )]
     RetreiveSSL {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
     },
     #[clap(
         name = "DeleteRecord",
         about = "Deleting record(s) information from PorkBun, with the given id or the subdomain and rtype options"
     )]
-    DeleteRecord(DeleteComand),
+    DeleteRecord(DeleteCommand),
     #[clap(
         name = "AddRecord",
-        about = "Adding record(s) information to PorkBun, with the given subdomain and rtype"
+        about = "Adding record(s) information to PorkBun, with the given content"
     )]
     AddRecord {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         name: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         rtype: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         content: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         ttl: String,
     },
     #[clap(
@@ -81,7 +75,7 @@ pub struct EditCommand {
     pub command: Option<EditOptions>,
 }
 #[derive(clap::Args)]
-pub struct DeleteComand {
+pub struct DeleteCommand {
     #[clap(subcommand)]
     pub command: Option<DeleteOptions>,
 }
@@ -92,9 +86,9 @@ pub enum DeleteOptions {
         about = "Deleting record(s) information from PorkBun, with the given id"
     )]
     ById {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         id: String,
     },
     #[clap(
@@ -102,11 +96,11 @@ pub enum DeleteOptions {
         about = "Deleting record(s) information from PorkBun, with the given subdomain"
     )]
     BySubdomanAndType {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         subdomain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         rtype: String,
     },
 }
@@ -118,17 +112,17 @@ pub enum EditOptions {
         about = "Updating record(s) information to PorkBun, with the given id"
     )]
     ById {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         id: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         name: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         rtype: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         content: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         ttl: Option<String>,
     },
     #[clap(
@@ -136,15 +130,15 @@ pub enum EditOptions {
         about = "Updating record(s) information to PorkBun, with the given subdomain"
     )]
     BySubdomanAndType {
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         domain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         subdomain: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         rtype: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         content: String,
-        #[clap(long, short, value_parser)]
+        #[clap(long, short)]
         ttl: String,
     },
 }
