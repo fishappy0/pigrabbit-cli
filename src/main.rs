@@ -1,6 +1,7 @@
 use clap::Parser;
 use commands::Cli;
 use directories::BaseDirs;
+use pigrabbit::prclient;
 use std::fs::File;
 use std::path::Path;
 use tokio;
@@ -45,8 +46,9 @@ fn get_keys(config_dir: &Path, config_file: &Path) -> pigrabbit::types::Keys {
         Err(e) => panic!("{}", e),
     }
 }
-
-async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::PathBuf>) {
+async fn generate_client_with_config_file(
+    config_file: Option<&std::path::PathBuf>,
+) -> pigrabbit::PRClient {
     let key_struct;
     match config_file {
         Some(v) => {
@@ -60,7 +62,11 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
         }
     }
 
-    let mut prclient = pigrabbit::PRClient::new(key_struct);
+    pigrabbit::PRClient::new(key_struct)
+}
+
+async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::PathBuf>) {
+    let mut prclient = generate_client_with_config_file(config_file).await;
     match &cli_instance.command {
         // Retreiving record by providing either id or subdomain and rtype.
         commands::Commands::RetreiveRecord {
