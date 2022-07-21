@@ -1,7 +1,6 @@
 use clap::Parser;
 use commands::Cli;
 use directories::BaseDirs;
-use pigrabbit::prclient;
 use std::fs::File;
 use std::path::Path;
 use tokio;
