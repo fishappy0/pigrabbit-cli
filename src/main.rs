@@ -57,12 +57,12 @@ async fn main() {
     let cli = commands::Cli::parse();
     match cli.command {
         // Retreiving record by providing either id or subdomain and rtype.
-        Some(commands::Commands::RetreiveRecord {
+        commands::Commands::RetreiveRecord {
             domain,
             id,
             subdomain,
             rtype,
-        }) => {
+        } => {
             print!(
                 "id: {:?}, subdomain: {:?}, rtype: {:?}",
                 id, subdomain, rtype
@@ -101,38 +101,38 @@ async fn main() {
             }
         }
         // Retreives the ssl certificate for a domain.
-        Some(commands::Commands::RetreiveSSL { domain }) => {
+        commands::Commands::RetreiveSSL { domain } => {
             let res = prclient.retreive_ssl_by_domain(&domain).await;
             println!("{:#?}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Deletes a record by each options.
-        Some(commands::Commands::DeleteRecord(delete_by)) => match delete_by.command {
+        commands::Commands::DeleteRecord(delete_by) => match delete_by.command {
             // Delete a record by id.
-            Some(commands::DeleteOptions::ById { domain, id }) => {
-                prclient.del_by_id(&domain, &id).await;
+            commands::DeleteOptions::ById { domain, id } => {
+                prclient.del_by_id(&domain, &id).await.unwrap();
                 println!("[PigRabbit] Deleted successfully!");
             }
             // Delete a record by subdomain and record type.
-            Some(commands::DeleteOptions::BySubdomanAndType {
+            commands::DeleteOptions::BySubdomanAndType {
                 domain,
                 subdomain,
                 rtype,
-            }) => {
-                let res = prclient
+            } => {
+                prclient
                     .del_by_type_with_subdomain(&rtype, &domain, &subdomain)
-                    .await;
+                    .await
+                    .unwrap();
                 println!("[PigRabbit] Deleted successfully!");
             }
-            _ => println!("[PigRabbit] Invalid arguments"),
         },
         // Creates a new record.
-        Some(commands::Commands::AddRecord {
+        commands::Commands::AddRecord {
             domain,
             name,
             rtype,
             content,
             ttl,
-        }) => {
+        } => {
             let record = pigrabbit::types::Record {
                 name: name,
                 dtype: rtype,
@@ -143,16 +143,16 @@ async fn main() {
             println!("{:#?}", res);
         }
         // Updates a record by each options.
-        Some(commands::Commands::EditRecord(edit_by)) => match edit_by.command {
+        commands::Commands::EditRecord(edit_by) => match edit_by.command {
             // Update a record by id.
-            Some(commands::EditOptions::ById {
+            commands::EditOptions::ById {
                 domain,
                 id,
                 name,
                 rtype,
                 content,
                 ttl,
-            }) => {
+            } => {
                 let record = pigrabbit::types::Record {
                     name: name,
                     dtype: rtype,
@@ -163,13 +163,13 @@ async fn main() {
                 println!("{:#?}", res);
             }
             // Update a record by subdomain and record type.
-            Some(commands::EditOptions::BySubdomanAndType {
+            commands::EditOptions::BySubdomanAndType {
                 domain,
                 subdomain,
                 rtype,
                 content,
                 ttl,
-            }) => {
+            } => {
                 let record_type = &rtype;
                 let record = pigrabbit::types::Record {
                     name: "".to_owned(),
@@ -182,8 +182,6 @@ async fn main() {
                     .await;
                 println!("{:#?}", res);
             }
-            _ => println!("[PigRabbit] Invalid arguments"),
         },
-        None => println!("[PigRabbit] No command specified"),
     }
 }
