@@ -103,14 +103,14 @@ async fn main() {
         // Retreives the ssl certificate for a domain.
         Some(commands::Commands::RetreiveSSL { domain }) => {
             let res = prclient.retreive_ssl_by_domain(&domain).await;
-            println!("{:#?}", res);
+            println!("{:#?}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Deletes a record by each options.
         Some(commands::Commands::DeleteRecord(delete_by)) => match delete_by.command {
             // Delete a record by id.
             Some(commands::DeleteOptions::ById { domain, id }) => {
-                let res = prclient.del_by_id(&domain, &id).await;
-                println!("{:#?}", res);
+                prclient.del_by_id(&domain, &id).await;
+                println!("[PigRabbit] Deleted successfully!");
             }
             // Delete a record by subdomain and record type.
             Some(commands::DeleteOptions::BySubdomanAndType {
@@ -121,7 +121,7 @@ async fn main() {
                 let res = prclient
                     .del_by_type_with_subdomain(&rtype, &domain, &subdomain)
                     .await;
-                println!("{:#?}", res);
+                println!("[PigRabbit] Deleted successfully!");
             }
             _ => println!("[PigRabbit] Invalid arguments"),
         },
