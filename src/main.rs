@@ -67,22 +67,21 @@ async fn generate_client_with_config_file(
 async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::PathBuf>) {
     let mut prclient = generate_client_with_config_file(config_file).await;
     match &cli_instance.command {
-        // Retreiving record by providing either id or subdomain and rtype.
+        // Retreiving record by providing either id or subdomain and record_type.
         commands::Commands::RetreiveRecord {
-            domain,
             id,
             subdomain,
-            rtype,
+            record_type,
         } => {
             print!(
-                "id: {:?}, subdomain: {:?}, rtype: {:?}",
-                id, subdomain, rtype
+                "id: {:?}, subdomain: {:?}, record_type: {:?}",
+                id, subdomain, record_type
             );
-            if id.to_owned() != None && rtype.to_owned() != None {
+            if id.to_owned() != None && record_type.to_owned() != None {
                 panic!("[PigRabbit] You can only either retreive a record by id or by subdomain and record type");
             }
 
-            let subdomain_result = match rtype {
+            let subdomain_result = match record_type {
                 Some(record_type) => {
                     let subdomain_name = match subdomain {
                         Some(subdomain) => subdomain,
@@ -90,7 +89,11 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                     };
 
                     let res = prclient
-                        .retreive_by_type_with_subdomain(&domain, &record_type, &subdomain_name)
+                        .retreive_by_type_with_subdomain(
+                            &cli_instance.domain,
+                            &record_type,
+                            &subdomain_name,
+                        )
                         .await;
                     println!("{:#?}", res);
                     true
@@ -99,7 +102,9 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
             };
             let id_result = match id {
                 Some(rid) => {
-                    let res = prclient.retreive_by_domain_with_id(&domain, &rid).await;
+                    let res = prclient
+                        .retreive_by_domain_with_id(&cli_instance.domain, &rid)
+                        .await;
                     println!("{:#?}", res);
                     true
                 }
@@ -107,30 +112,31 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
             };
 
             if id_result == false && subdomain_result == false {
-                let res = prclient.retreive_by_domain_with_id(&domain, "").await;
+                let res = prclient
+                    .retreive_by_domain_with_id(&cli_instance.domain, "")
+                    .await;
                 println!("{:#?}", res);
             }
         }
         // Retreives the ssl certificate for a domain.
-        commands::Commands::RetreiveSSL { domain } => {
-            let res = prclient.retreive_ssl_by_domain(&domain).await;
+        commands::Commands::RetreiveSSL {} => {
+            let res = prclient.retreive_ssl_by_domain(&cli_instance.domain).await;
             println!("{:#?}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Deletes a record by each options.
         commands::Commands::DeleteRecord(delete_by) => match &delete_by.command {
             // Delete a record by id.
-            commands::DeleteOptions::ById { domain, id } => {
-                prclient.del_by_id(&domain, &id).await.unwrap();
+            commands::DeleteOptions::ById { id } => {
+                prclient.del_by_id(&cli_instance.domain, &id).await.unwrap();
                 println!("[PigRabbit] Deleted successfully!");
             }
             // Delete a record by subdomain and record type.
-            commands::DeleteOptions::BySubdomanAndType {
-                domain,
+            commands::DeleteOptions::BySubdomainAndType {
                 subdomain,
-                rtype,
+                record_type,
             } => {
                 prclient
-                    .del_by_type_with_subdomain(&rtype, &domain, &subdomain)
+                    .del_by_type_with_subdomain(&record_type, &cli_instance.domain, &subdomain)
                     .await
                     .unwrap();
                 println!("[PigRabbit] Deleted successfully!");
@@ -138,58 +144,62 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
         },
         // Creates a new record.
         commands::Commands::AddRecord {
-            domain,
             name,
-            rtype,
+            record_type,
             content,
             ttl,
         } => {
             let record = pigrabbit::types::Record {
                 name: name.to_owned(),
-                dtype: rtype.to_owned(),
+                dtype: record_type.to_owned(),
                 content: content.to_owned(),
-                ttl: ttl.to_owned(),
+                ttl: ttl.to_string(),
             };
-            let res = prclient.add_record(&domain, &record).await;
+            let res = prclient.add_record(&cli_instance.domain, &record).await;
             println!("{:#?}", res);
         }
         // Updates a record by each options.
         commands::Commands::EditRecord(edit_by) => match &edit_by.command {
             // Update a record by id.
             commands::EditOptions::ById {
-                domain,
                 id,
                 name,
-                rtype,
+                record_type,
                 content,
                 ttl,
             } => {
                 let record = pigrabbit::types::Record {
                     name: name.to_owned(),
-                    dtype: rtype.to_owned(),
+                    dtype: record_type.to_owned(),
                     content: content.to_owned(),
                     ttl: ttl.to_owned().unwrap_or("".to_owned()),
                 };
-                let res = prclient.edit_by_domain_and_id(&domain, &id, &record).await;
+                let res = prclient
+                    .edit_by_domain_and_id(&cli_instance.domain, &id, &record)
+                    .await;
                 println!("{:#?}", res);
             }
             // Update a record by subdomain and record type.
-            commands::EditOptions::BySubdomanAndType {
-                domain,
+            commands::EditOptions::BySubdomainAndType {
                 subdomain,
-                rtype,
+                record_type,
                 content,
                 ttl,
             } => {
-                let record_type = &rtype;
+                let record_type = &record_type;
                 let record = pigrabbit::types::Record {
                     name: "".to_owned(),
-                    dtype: rtype.to_owned(),
+                    dtype: record_type.to_string(),
                     content: content.to_owned(),
                     ttl: ttl.to_owned(),
                 };
                 let res = prclient
-                    .edit_by_domain_subdomain_and_type(&domain, &subdomain, record_type, &record)
+                    .edit_by_domain_subdomain_and_type(
+                        &cli_instance.domain,
+                        &subdomain,
+                        record_type,
+                        &record,
+                    )
                     .await;
                 println!("{:#?}", res);
             }
