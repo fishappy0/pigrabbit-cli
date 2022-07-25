@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{ErrorKind, Parser};
 use commands::Cli;
 use directories::BaseDirs;
 use std::fs::File;
@@ -73,12 +73,8 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
             subdomain,
             record_type,
         } => {
-            print!(
-                "id: {:?}, subdomain: {:?}, record_type: {:?}",
-                id, subdomain, record_type
-            );
             if id.to_owned() != None && record_type.to_owned() != None {
-                panic!("[PigRabbit] You can only either retreive a record by id or by subdomain and record type");
+                panic!("[PigRabbit] {}", ErrorKind::ArgumentConflict);
             }
 
             let subdomain_result = match record_type {
@@ -95,7 +91,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                             &subdomain_name,
                         )
                         .await;
-                    println!("{:#?}", res);
+                    println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
                     true
                 }
                 None => false,
@@ -105,7 +101,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                     let res = prclient
                         .retreive_by_domain_with_id(&cli_instance.domain, &rid)
                         .await;
-                    println!("{:#?}", res);
+                    println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
                     true
                 }
                 None => false,
@@ -115,13 +111,13 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                 let res = prclient
                     .retreive_by_domain_with_id(&cli_instance.domain, "")
                     .await;
-                println!("{:#?}", res);
+                println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
             }
         }
         // Retreives the ssl certificate for a domain.
         commands::Commands::RetreiveSSL {} => {
             let res = prclient.retreive_ssl_by_domain(&cli_instance.domain).await;
-            println!("{:#?}", serde_yaml::to_string(&res.unwrap()).unwrap());
+            println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Deletes a record by each options.
         commands::Commands::DeleteRecord(delete_by) => match &delete_by.command {
@@ -156,7 +152,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                 ttl: ttl.to_string(),
             };
             let res = prclient.add_record(&cli_instance.domain, &record).await;
-            println!("{:#?}", res);
+            println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
         }
         // Updates a record by each options.
         commands::Commands::EditRecord(edit_by) => match &edit_by.command {
@@ -177,7 +173,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                 let res = prclient
                     .edit_by_domain_and_id(&cli_instance.domain, &id, &record)
                     .await;
-                println!("{:#?}", res);
+                println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
             }
             // Update a record by subdomain and record type.
             commands::EditOptions::BySubdomainAndType {
@@ -194,14 +190,9 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                     ttl: ttl.to_owned(),
                 };
                 let res = prclient
-                    .edit_by_domain_subdomain_and_type(
-                        &cli_instance.domain,
-                        &subdomain,
-                        record_type,
-                        &record,
-                    )
+                    .edit_by_domain_subdomain_and_type(&cli_instance.domain, &subdomain, &record)
                     .await;
-                println!("{:#?}", res);
+                println!("{}", serde_yaml::to_string(&res.unwrap()).unwrap());
             }
         },
     }

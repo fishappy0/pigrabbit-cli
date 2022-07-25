@@ -43,7 +43,7 @@ pub enum Commands {
         record_type: String,
         #[clap(long, short)]
         content: String,
-        #[clap(long, short, default_value = "300")]
+        #[clap(long, default_value = "300")]
         ttl: i32,
     },
     #[clap(
@@ -89,7 +89,7 @@ pub enum EditOptions {
         record_type: String,
         #[clap(long, short)]
         content: String,
-        #[clap(long, short)]
+        #[clap(long)]
         ttl: Option<String>,
     },
     #[clap(about = "Updating record(s) information to PorkBun, with the given subdomain")]
@@ -100,7 +100,7 @@ pub enum EditOptions {
         record_type: String,
         #[clap(long, short)]
         content: String,
-        #[clap(long, short)]
+        #[clap(long)]
         ttl: String,
     },
 }
