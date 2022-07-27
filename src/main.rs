@@ -200,6 +200,6 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
 #[tokio::main]
 async fn main() {
     let cli = commands::Cli::parse();
-    //Run command
+
     execute_command(&cli, cli.config.as_ref()).await;
 }
