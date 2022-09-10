@@ -28,7 +28,7 @@ fn create_config_file(json_config_dir: &Path) -> pigrabbit::types::Keys {
 fn read_existing_dir_or_create(config_dir: &Path) {
     match std::fs::read_dir(config_dir) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            std::fs::create_dir(config_dir).unwrap()
+            std::fs::create_dir_all(config_dir).unwrap()
         }
         Err(e) => panic!("Error: {}", e),
         _ => (),
@@ -107,7 +107,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                 None => false,
             };
 
-            if id_result == false && subdomain_result == false {
+            if !id_result && !subdomain_result {
                 let res = prclient
                     .retreive_by_domain_with_id(&cli_instance.domain, "")
                     .await;
@@ -168,7 +168,7 @@ async fn execute_command(cli_instance: &Cli, config_file: Option<&std::path::Pat
                     name: name.to_owned(),
                     dtype: record_type.to_owned(),
                     content: content.to_owned(),
-                    ttl: ttl.to_owned().unwrap_or("".to_owned()),
+                    ttl: ttl.to_owned().unwrap_or_else(|| "".to_owned()),
                 };
                 let res = prclient
                     .edit_by_domain_and_id(&cli_instance.domain, &id, &record)
